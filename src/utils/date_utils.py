@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import pandas_market_calendars as mcal
+import pytz
 
 
 def get_last_workday(date):
@@ -12,6 +13,16 @@ def get_last_workday(date):
 
 def get_last_trading_day():
     nyse = mcal.get_calendar("NYSE")
-    now = datetime.now()
+    eastern = pytz.timezone("US/Eastern")
+    now = datetime.now(tz=eastern)
+
     schedule = nyse.schedule(start_date=now - timedelta(days=10), end_date=now)
-    return schedule.index[-1].date()
+    trading_days = schedule.index
+
+    if now.time() < datetime.strptime("16:00", "%H:%M").time():
+        return trading_days[-2].date()
+    else:
+        if trading_days[-1].date() == now.date():
+            return trading_days[-1].date()
+        else:
+            return trading_days[-2].date()
