@@ -8,4 +8,4 @@ requests-html
 lxml_html_clean
 requests
 pyarrow
-
+pandas_market_calendars
