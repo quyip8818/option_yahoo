@@ -111,10 +111,10 @@ def fetch_option_percentiles(date):
     expiry_date_df = pd.read_csv(get_root_path(f"finance/expiry_dates.csv"))
     expiry_date_df.set_index("symbol", inplace=True)
     df = pd.merge(df, expiry_date_df, left_index=True, right_index=True, how="left")
-    df = fillin_finance_report_date(df, date)
+    # df = fillin_finance_report_date(df, date)
 
     df["ratio"] = df.apply(
-        lambda row: divide(row["ivmean1080"], row["ivmean1080"]), axis=1
+        lambda row: divide(row["ivmean1080"], row["ivmean10"]), axis=1
     )
     df.to_csv(iv_rank_final_path, index=True, index_label="symbol")
     for symbol, row in df.iterrows():
