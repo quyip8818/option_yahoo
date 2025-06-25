@@ -6,7 +6,6 @@ import pandas as pd
 
 from src.quandl.headers import PercentiledIVHeader
 from src.utils.path_utils import (
-    get_raw_path,
     get_quandl_path,
     get_data_path,
     get_latest_date,
@@ -114,6 +113,9 @@ def fetch_option_percentiles(date):
     df = pd.merge(df, expiry_date_df, left_index=True, right_index=True, how="left")
     df = fillin_finance_report_date(df, date)
 
+    df["ratio"] = df.apply(
+        lambda row: divide(row["ivmean1080"], row["ivmean1080"]), axis=1
+    )
     df.to_csv(iv_rank_final_path, index=True, index_label="symbol")
     for symbol, row in df.iterrows():
         if symbol == "nan":
@@ -219,6 +221,12 @@ def fillin_finance_report_date(df, date):
         ]
         + current_headers
     ]
+
+
+def divide(dividend, divisor):
+    if dividend is None or divisor is None or divisor == 0:
+        return None
+    return dividend / divisor
 
 
 if __name__ == "__main__":

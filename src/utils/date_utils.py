@@ -11,6 +11,7 @@ def get_last_workday(date):
     else:
         return date
 
+
 def get_last_trading_day():
     nyse = mcal.get_calendar("NYSE")
     eastern = pytz.timezone("US/Eastern")
