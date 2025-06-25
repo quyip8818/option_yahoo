@@ -113,7 +113,7 @@ def fetch_option_percentiles(date):
     df = pd.merge(df, expiry_date_df, left_index=True, right_index=True, how="left")
     # df = fillin_finance_report_date(df, date)
 
-    df["ratio"] = df.apply(
+    df["iv_ratio"] = df.apply(
         lambda row: divide(row["ivmean1080"], row["ivmean10"]), axis=1
     )
     df.to_csv(iv_rank_final_path, index=True, index_label="symbol")

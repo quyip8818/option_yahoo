@@ -21,12 +21,16 @@ def filter_qualified_options(date):
 def is_qualified(row):
     if row['max_days'] < 500 or np.isnan(row['max_days']):
         return False
-    if row['current_price'] < 30:
+    if row['current_price'] < 20:
         return False
     if row['ivmean1080'] > 0.4:
         return False
-    if row['ivcall1080_rank'] > 40:
-        return False
-    if row['ivput1080_rank'] > 50:
+    if row['ivmean1080'] > 0.2:
+        if row['ivcall1080_rank'] > 30 or row['ivput1080_rank'] > 40:
+            return False
+    else:
+        if row['ivcall1080_rank'] > 70 or row['ivput1080_rank'] > 70:
+            return False
+    if row['iv_ratio'] > 0.75 or np.isnan(row['iv_ratio']):
         return False
     return  True
