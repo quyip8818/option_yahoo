@@ -2,6 +2,8 @@ from time import sleep
 
 import yfinance as yf
 
+from src.utils.utils import round_num
+
 
 def get_stock_info(symbol):
     try:
@@ -9,8 +11,8 @@ def get_stock_info(symbol):
         ticker = yf.Ticker(symbol)
         info = ticker.fast_info
         sleep(0.3)
-        current_price = info["lastPrice"]
-        market_cap = info["marketCap"]
+        current_price = round_num(info.get("lastPrice"), 2)
+        market_cap = round_num(info.get("marketCap"), 0)
         return current_price, market_cap
     except Exception as e:
         if "Rate limited" in e.args[0]:

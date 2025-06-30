@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+
 
 def get_symbols_from_folders(folder):
     symbols = [
@@ -11,6 +13,8 @@ def get_symbols_from_folders(folder):
 
 
 def round_num(num, point):
+    if num is None or np.isnan(num):
+        return None
     if isinstance(num, float):
         return round(num, point)
     return num
