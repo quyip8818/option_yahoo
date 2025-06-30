@@ -70,7 +70,6 @@ def fillin_market_data(path, date):
     for idx in range(len(df)):
         if pd.notna(df.loc[idx, "current_price"]):
             continue
-        df["market_cap"] = np.nan
         symbol = df.loc[idx, "symbol"]
         try:
             current_price, market_cap = get_stock_info(symbol)
