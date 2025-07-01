@@ -8,3 +8,5 @@ raw/
 quandl/option_iv_raw
 quandl/option_iv_rank_by_symbols/NAN.csv
 quandl/option_iv_rank_by_symbols/nan.csv
+
+**/.DS_Store
