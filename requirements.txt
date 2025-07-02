@@ -9,6 +9,7 @@ lxml_html_clean
 requests
 pyarrow
 pandas_market_calendars
+dask
 
 black
 flake8
