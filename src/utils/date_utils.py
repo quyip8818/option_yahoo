@@ -12,12 +12,18 @@ def get_last_workday(date):
         return date
 
 
-def get_last_trading_day():
-    nyse = mcal.get_calendar("NYSE")
-    eastern = pytz.timezone("US/Eastern")
-    now = datetime.now(tz=eastern)
+nyse = mcal.get_calendar("NYSE")
+eastern = pytz.timezone("US/Eastern")
 
-    schedule = nyse.schedule(start_date=now - timedelta(days=10), end_date=now)
+
+def get_now():
+    return datetime.now(tz=eastern)
+
+
+def get_last_trading_day():
+    now = get_now()
+
+    schedule = nyse.schedule(start_date=now - timedelta(days=5), end_date=now)
     trading_days = schedule.index
 
     if now.time() < datetime.strptime("16:00", "%H:%M").time():
@@ -27,3 +33,10 @@ def get_last_trading_day():
             return trading_days[-1].date()
         else:
             return trading_days[-2].date()
+
+
+def get_current_trading_day():
+    now = get_now()
+    schedule = nyse.schedule(start_date=now - timedelta(days=5), end_date=now)
+    trading_days = schedule.index
+    return trading_days[-1].date()
