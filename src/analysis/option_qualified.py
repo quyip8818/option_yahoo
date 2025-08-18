@@ -29,7 +29,7 @@ def is_qualified(row):
             return False
     else:
         if row["ivmean1080"] > 0.2:
-            if row["ivcall1080_rank"] > 3 or row["ivput1080_rank"] > 5:
+            if row["ivcall1080_rank"] > 5 or row["ivput1080_rank"] > 8:
                 return False
         else:
             if row["ivcall1080_rank"] > 8 or row["ivput1080_rank"] > 12:
