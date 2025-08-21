@@ -29,10 +29,10 @@ def is_qualified(row):
             return False
     else:
         if row["ivmean1080"] > 0.2:
-            if row["ivcall1080_rank"] > 5 or row["ivput1080_rank"] > 8:
+            if row["ivcall1080_rank"] > 7 or row["ivput1080_rank"] > 10:
                 return False
         else:
-            if row["ivcall1080_rank"] > 8 or row["ivput1080_rank"] > 12:
+            if row["ivcall1080_rank"] > 10 or row["ivput1080_rank"] > 14:
                 return False
         if row["iv_ratio"] > 1.0 or np.isnan(row["iv_ratio"]):
             return False
