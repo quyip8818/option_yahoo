@@ -22,17 +22,17 @@ def is_qualified(row):
         return False
     if row["current_price"] < 50:
         return False
-    if row["ivmean1080"] > 0.4:
+    if row["ivmean1080"] > 0.4 or row["ivmean1080"] < 0.1:
         return False
     if np.isnan(row["ivcall1080_rank"]) or np.isnan(row["ivput1080_rank"]):
         if row["iv_ratio"] > 0.9 or np.isnan(row["iv_ratio"]):
             return False
     else:
         if row["ivmean1080"] > 0.2:
-            if row["ivcall1080_rank"] > 7 or row["ivput1080_rank"] > 10:
+            if row["ivcall1080_rank"] > 10 or row["ivput1080_rank"] > 12:
                 return False
         else:
-            if row["ivcall1080_rank"] > 10 or row["ivput1080_rank"] > 14:
+            if row["ivcall1080_rank"] > 15 or row["ivput1080_rank"] > 20:
                 return False
         if row["iv_ratio"] > 1.0 or np.isnan(row["iv_ratio"]):
             return False
