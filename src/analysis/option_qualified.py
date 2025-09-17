@@ -34,6 +34,6 @@ def is_qualified(row):
         else:
             if row["ivcall1080_rank"] > 15 or row["ivput1080_rank"] > 20:
                 return False
-        if row["iv_ratio"] > 1.0 or np.isnan(row["iv_ratio"]):
+        if row["iv_ratio"] >= 1.05 or np.isnan(row["iv_ratio"]):
             return False
     return True
