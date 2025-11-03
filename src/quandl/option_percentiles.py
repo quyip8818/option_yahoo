@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from time import sleep
 
 import numpy as np
@@ -85,12 +86,11 @@ def fetch_option_percentiles(date):
     expiry_date_df = pd.read_csv(get_root_path(f"finance/expiry_dates.csv"))
     expiry_date_df.set_index("symbol", inplace=True)
     df = pd.merge(df, expiry_date_df, left_index=True, right_index=True, how="left")
-    from datetime import datetime as dt
 
-    if isinstance(date, dt):
+    if isinstance(date, datetime):
         current_date = date
     else:
-        current_date = dt.combine(date, dt.min.time())
+        current_date = datetime.combine(date, datetime.min.time())
     df = fillin_finance_report_date(df, current_date)
 
     df["iv_ratio"] = df.apply(
