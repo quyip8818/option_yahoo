@@ -10,6 +10,7 @@ requests
 pyarrow
 pandas_market_calendars
 dask
+python-dotenv
 
 black
 flake8
