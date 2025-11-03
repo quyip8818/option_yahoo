@@ -10,7 +10,7 @@ load_dotenv()
 
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 BASE_URL = "https://finnhub.io/api/v1"
-API_DELAY = 0.1
+API_DELAY = 0.3
 
 
 def _make_api_request(url: str, params: dict, symbol: str = "") -> Optional[dict]:
