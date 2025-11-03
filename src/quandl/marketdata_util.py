@@ -20,7 +20,7 @@ def fillin_market_data(path, date):
     df = pd.read_csv(path)
     date = pd.Timestamp(date)
 
-    for col in ["next_report_days", "next_report_date"]:
+    for col in ["next_report_days", "next_report_date", "current_price"]:
         if col not in df.columns:
             df[col] = None
 
