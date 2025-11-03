@@ -83,20 +83,16 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
 def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
     from_date = (current_date - timedelta(days=90)).strftime("%Y-%m-%d")
     to_date = (current_date + timedelta(days=90)).strftime("%Y-%m-%d")
-    
+
     url = f"{BASE_URL}/calendar/earnings"
-    params = {
-        "from": from_date,
-        "to": to_date,
-        "token": FINNHUB_API_KEY
-    }
-    
+    params = {"from": from_date, "to": to_date, "token": FINNHUB_API_KEY}
+
     data = _make_api_request(url, params, "earnings_calendar")
-    
+
     if not isinstance(data, list):
         print(f"Warning: earnings calendar API returned non-list data: {type(data)}")
         return {}
-    
+
     results = {}
     for item in data:
         symbol = item.get("symbol")
@@ -105,9 +101,9 @@ def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
             if symbol not in results:
                 results[symbol] = []
             results[symbol].append(date)
-    
+
     for symbol in results:
         results[symbol] = sorted(list(set(results[symbol])))
-    
+
     print(f"Fetched earnings dates for {len(results)} symbols")
     return results

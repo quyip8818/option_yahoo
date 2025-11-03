@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import pandas as pd
 from src.utils.finnhub_utils import get_stock_price, get_all_earnings_dates
 
@@ -16,12 +16,11 @@ def _process_earnings_dates(dates: List[str]) -> Optional[pd.DatetimeIndex]:
     return result if len(result) > 0 else None
 
 
-def fillin_market_data(path, date):
+def fillin_market_data(path: str, current_date: datetime) -> None:
     if not os.path.exists(path):
         return
     df = pd.read_csv(path)
-    date = pd.Timestamp(date)
-    current_date = date.to_pydatetime()
+    date = pd.Timestamp(current_date)
 
     for col in ["next_report_days", "next_report_date", "current_price"]:
         if col not in df.columns:
@@ -63,7 +62,9 @@ def fillin_market_data(path, date):
             if next_report_date is not None:
                 df.loc[idx, "next_report_date"] = next_report_date
         df.to_csv(path, index=False)
-        print(f"Updated earnings dates for {updated_count}/{len(symbols_earnings)} symbols")
+        print(
+            f"Updated earnings dates for {updated_count}/{len(symbols_earnings)} symbols"
+        )
 
     if symbols_price:
         for count, (symbol, idx) in enumerate(symbols_price, 1):
@@ -84,7 +85,9 @@ def fillin_market_data(path, date):
     print("Processed all symbols")
 
 
-def get_next_report_days(date, rep_dates):
+def get_next_report_days(
+    date: pd.Timestamp, rep_dates: Optional[pd.DatetimeIndex]
+) -> Tuple[Optional[int], Optional[pd.Timestamp]]:
     if rep_dates is None or len(rep_dates) == 0:
         return None, None
     for rep_date in rep_dates:
@@ -95,7 +98,9 @@ def get_next_report_days(date, rep_dates):
     return None, None
 
 
-def get_pass_report_days(date, rep_dates):
+def get_pass_report_days(
+    date: pd.Timestamp, rep_dates: Optional[pd.DatetimeIndex]
+) -> Optional[int]:
     if rep_dates is None:
         return None
     for rep_date in reversed(rep_dates):
@@ -105,7 +110,9 @@ def get_pass_report_days(date, rep_dates):
     return None
 
 
-def fillin_finance_report_date(df, current_date):
+def fillin_finance_report_date(
+    df: pd.DataFrame, current_date: datetime
+) -> pd.DataFrame:
     date = pd.Timestamp(current_date)
 
     if "symbol" in df.columns:
@@ -133,5 +140,11 @@ def fillin_finance_report_date(df, current_date):
         lambda r: get_pass_report_days(date, reports.get(r["symbol"])), axis=1
     )
 
-    current_headers = [col for col in df.columns if col not in ["pass_report_days", "next_report_days", "next_report_date"]]
-    return df[["pass_report_days", "next_report_days", "next_report_date"] + current_headers]
+    current_headers = [
+        col
+        for col in df.columns
+        if col not in ["pass_report_days", "next_report_days", "next_report_date"]
+    ]
+    return df[
+        ["pass_report_days", "next_report_days", "next_report_date"] + current_headers
+    ]

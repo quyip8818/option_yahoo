@@ -86,6 +86,7 @@ def fetch_option_percentiles(date):
     expiry_date_df.set_index("symbol", inplace=True)
     df = pd.merge(df, expiry_date_df, left_index=True, right_index=True, how="left")
     from datetime import datetime as dt
+
     if isinstance(date, dt):
         current_date = date
     else:
