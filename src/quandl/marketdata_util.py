@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List, Optional
 import pandas as pd
 from src.utils.finnhub_utils import get_stock_price, get_all_earnings_dates
@@ -10,8 +11,9 @@ SAVE_INTERVAL = 10
 def _process_earnings_dates(dates: List[str]) -> Optional[pd.DatetimeIndex]:
     if not dates:
         return None
-    dt_index = pd.to_datetime(sorted(dates), format="%Y-%m-%d", errors="coerce")
-    return dt_index[pd.notna(dt_index)]
+    dt_index = pd.to_datetime(sorted(dates), errors="coerce")
+    result = dt_index[pd.notna(dt_index)]
+    return result if len(result) > 0 else None
 
 
 def fillin_market_data(path, date):
@@ -19,6 +21,7 @@ def fillin_market_data(path, date):
         return
     df = pd.read_csv(path)
     date = pd.Timestamp(date)
+    current_date = date.to_pydatetime()
 
     for col in ["next_report_days", "next_report_date", "current_price"]:
         if col not in df.columns:
@@ -41,22 +44,26 @@ def fillin_market_data(path, date):
 
     if symbols_earnings:
         print("Fetching earnings dates for all stocks...")
-        earnings_dict_raw = get_all_earnings_dates()
+        earnings_dict_raw = get_all_earnings_dates(current_date)
         earnings_dict = {
             symbol: _process_earnings_dates(dates)
             for symbol, dates in earnings_dict_raw.items()
         }
 
+        updated_count = 0
         for symbol in symbols_earnings:
             idx = indices_map[symbol]
             rep_dates = earnings_dict.get(symbol)
+            if rep_dates is None or len(rep_dates) == 0:
+                continue
             next_report_days, next_report_date = get_next_report_days(date, rep_dates)
             if next_report_days is not None:
                 df.loc[idx, "next_report_days"] = next_report_days
+                updated_count += 1
             if next_report_date is not None:
                 df.loc[idx, "next_report_date"] = next_report_date
         df.to_csv(path, index=False)
-        print(f"Updated earnings dates for {len(symbols_earnings)} symbols")
+        print(f"Updated earnings dates for {updated_count}/{len(symbols_earnings)} symbols")
 
     if symbols_price:
         for count, (symbol, idx) in enumerate(symbols_price, 1):
@@ -78,12 +85,13 @@ def fillin_market_data(path, date):
 
 
 def get_next_report_days(date, rep_dates):
-    if rep_dates is None:
+    if rep_dates is None or len(rep_dates) == 0:
         return None, None
     for rep_date in rep_dates:
-        next_report_days = (rep_date - date).days
+        delta = rep_date - date
+        next_report_days = delta.days
         if next_report_days >= 0:
-            return next_report_days, rep_date
+            return int(next_report_days), rep_date
     return None, None
 
 
@@ -97,59 +105,33 @@ def get_pass_report_days(date, rep_dates):
     return None
 
 
-def fillin_finance_report_date(df, date):
-    current_headers = df.columns.tolist()
-    date = pd.Timestamp(date)
+def fillin_finance_report_date(df, current_date):
+    date = pd.Timestamp(current_date)
 
     if "symbol" in df.columns:
-        unique_symbols = df["symbol"].dropna().unique().tolist()
-        use_column = True
-    elif hasattr(df.index, "tolist") and len(df.index) > 0:
-        unique_symbols = [
-            s for s in df.index.tolist() if isinstance(s, str) and len(s) > 0
-        ]
-        unique_symbols = list(set(unique_symbols))
-        use_column = False
+        df = df.copy()
     else:
-        unique_symbols = []
-        use_column = None
+        df = df.reset_index()
 
+    unique_symbols = df["symbol"].dropna().unique().tolist()
     if not unique_symbols:
         print("No symbols found in dataframe")
         return df
 
     print("Fetching earnings dates for all stocks...")
-    earnings_dict_raw = get_all_earnings_dates()
+    earnings_dict_raw = get_all_earnings_dates(current_date)
     reports = {
         symbol: _process_earnings_dates(dates)
         for symbol, dates in earnings_dict_raw.items()
     }
 
-    if use_column is not None:
-        if use_column:
-            df[["next_report_days", "next_report_date"]] = df.apply(
-                lambda r: pd.Series(
-                    get_next_report_days(date, reports.get(r["symbol"]))
-                ),
-                axis=1,
-            )
-            df["pass_report_days"] = df.apply(
-                lambda r: get_pass_report_days(date, reports.get(r["symbol"])), axis=1
-            )
-        else:
-            df[["next_report_days", "next_report_date"]] = df.apply(
-                lambda r: pd.Series(get_next_report_days(date, reports.get(r.name))),
-                axis=1,
-            )
-            df["pass_report_days"] = df.apply(
-                lambda r: get_pass_report_days(date, reports.get(r.name)), axis=1
-            )
+    df[["next_report_days", "next_report_date"]] = df.apply(
+        lambda r: pd.Series(get_next_report_days(date, reports.get(r["symbol"]))),
+        axis=1,
+    )
+    df["pass_report_days"] = df.apply(
+        lambda r: get_pass_report_days(date, reports.get(r["symbol"])), axis=1
+    )
 
-    return df[
-        [
-            "pass_report_days",
-            "next_report_days",
-            "next_report_date",
-        ]
-        + current_headers
-    ]
+    current_headers = [col for col in df.columns if col not in ["pass_report_days", "next_report_days", "next_report_date"]]
+    return df[["pass_report_days", "next_report_days", "next_report_date"] + current_headers]

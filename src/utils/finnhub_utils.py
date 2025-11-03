@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import requests
 from dotenv import load_dotenv
@@ -79,13 +80,9 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
     return []
 
 
-def get_all_earnings_dates(from_date: str = None, to_date: str = None) -> Dict[str, List[str]]:
-    from datetime import datetime, timedelta
-    
-    if from_date is None:
-        from_date = datetime.now().strftime("%Y-%m-%d")
-    if to_date is None:
-        to_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
+    from_date = (current_date - timedelta(days=90)).strftime("%Y-%m-%d")
+    to_date = (current_date + timedelta(days=90)).strftime("%Y-%m-%d")
     
     url = f"{BASE_URL}/calendar/earnings"
     params = {
@@ -97,6 +94,7 @@ def get_all_earnings_dates(from_date: str = None, to_date: str = None) -> Dict[s
     data = _make_api_request(url, params, "earnings_calendar")
     
     if not isinstance(data, list):
+        print(f"Warning: earnings calendar API returned non-list data: {type(data)}")
         return {}
     
     results = {}
@@ -111,4 +109,5 @@ def get_all_earnings_dates(from_date: str = None, to_date: str = None) -> Dict[s
     for symbol in results:
         results[symbol] = sorted(list(set(results[symbol])))
     
+    print(f"Fetched earnings dates for {len(results)} symbols")
     return results
