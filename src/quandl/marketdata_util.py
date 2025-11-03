@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 import pandas as pd
-from src.utils.finnhub_utils import get_stock_price, get_batch_earnings_dates
+from src.utils.finnhub_utils import get_stock_price, get_all_earnings_dates
 
 BATCH_SIZE = 50
 SAVE_INTERVAL = 10
@@ -40,22 +40,12 @@ def fillin_market_data(path, date):
     indices_map = {df.loc[idx, "symbol"]: idx for idx in range(len(df))}
 
     if symbols_earnings:
-        unique_symbols = list(set(symbols_earnings))
-        earnings_dict = {}
-
-        for i in range(0, len(unique_symbols), BATCH_SIZE):
-            batch_symbols = unique_symbols[i : i + BATCH_SIZE]
-            try:
-                batch_earnings = get_batch_earnings_dates(batch_symbols)
-                for symbol in batch_symbols:
-                    dates = batch_earnings.get(symbol, [])
-                    earnings_dict[symbol] = _process_earnings_dates(dates)
-
-                total_batches = (len(unique_symbols) + BATCH_SIZE - 1) // BATCH_SIZE
-                print(f"Processed earnings batch {i // BATCH_SIZE + 1}/{total_batches}")
-            except Exception as e:
-                print(f"Error processing earnings batch: {e}")
-                continue
+        print("Fetching earnings dates for all stocks...")
+        earnings_dict_raw = get_all_earnings_dates()
+        earnings_dict = {
+            symbol: _process_earnings_dates(dates)
+            for symbol, dates in earnings_dict_raw.items()
+        }
 
         for symbol in symbols_earnings:
             idx = indices_map[symbol]
@@ -66,6 +56,7 @@ def fillin_market_data(path, date):
             if next_report_date is not None:
                 df.loc[idx, "next_report_date"] = next_report_date
         df.to_csv(path, index=False)
+        print(f"Updated earnings dates for {len(symbols_earnings)} symbols")
 
     if symbols_price:
         for count, (symbol, idx) in enumerate(symbols_price, 1):
@@ -127,21 +118,12 @@ def fillin_finance_report_date(df, date):
         print("No symbols found in dataframe")
         return df
 
-    reports = {}
-
-    for i in range(0, len(unique_symbols), BATCH_SIZE):
-        batch_symbols = unique_symbols[i : i + BATCH_SIZE]
-        try:
-            batch_earnings = get_batch_earnings_dates(batch_symbols)
-            for symbol in batch_symbols:
-                dates = batch_earnings.get(symbol, [])
-                reports[symbol] = _process_earnings_dates(dates)
-            print(
-                f"Processed earnings batch {i // BATCH_SIZE + 1}, symbols: {batch_symbols[0]} to {batch_symbols[-1]}"
-            )
-        except Exception as e:
-            print(f"Error processing earnings batch starting at {i}: {e}")
-            continue
+    print("Fetching earnings dates for all stocks...")
+    earnings_dict_raw = get_all_earnings_dates()
+    reports = {
+        symbol: _process_earnings_dates(dates)
+        for symbol, dates in earnings_dict_raw.items()
+    }
 
     if use_column is not None:
         if use_column:
