@@ -22,9 +22,14 @@ def fillin_market_data(path: str, current_date: datetime) -> None:
     df = pd.read_csv(path)
     date = pd.Timestamp(current_date)
 
-    for col in ["next_report_days", "next_report_date", "current_price"]:
-        if col not in df.columns:
-            df[col] = None
+    if "next_report_days" not in df.columns:
+        df["next_report_days"] = pd.NA
+    if "next_report_date" not in df.columns:
+        df["next_report_date"] = pd.NaT
+    else:
+        df["next_report_date"] = pd.to_datetime(df["next_report_date"], errors="coerce")
+    if "current_price" not in df.columns:
+        df["current_price"] = pd.NA
 
     symbols_earnings = [
         df.loc[idx, "symbol"]
@@ -42,14 +47,12 @@ def fillin_market_data(path: str, current_date: datetime) -> None:
     indices_map = {df.loc[idx, "symbol"]: idx for idx in range(len(df))}
 
     if symbols_earnings:
-        print("Fetching earnings dates for all stocks...")
         earnings_dict_raw = get_all_earnings_dates(current_date)
         earnings_dict = {
             symbol: _process_earnings_dates(dates)
             for symbol, dates in earnings_dict_raw.items()
         }
 
-        updated_count = 0
         for symbol in symbols_earnings:
             idx = indices_map[symbol]
             rep_dates = earnings_dict.get(symbol)
@@ -57,14 +60,10 @@ def fillin_market_data(path: str, current_date: datetime) -> None:
                 continue
             next_report_days, next_report_date = get_next_report_days(date, rep_dates)
             if next_report_days is not None:
-                df.loc[idx, "next_report_days"] = next_report_days
-                updated_count += 1
+                df.loc[idx, "next_report_days"] = int(next_report_days)
             if next_report_date is not None:
-                df.loc[idx, "next_report_date"] = next_report_date
+                df.loc[idx, "next_report_date"] = pd.Timestamp(next_report_date)
         df.to_csv(path, index=False)
-        print(
-            f"Updated earnings dates for {updated_count}/{len(symbols_earnings)} symbols"
-        )
 
     if symbols_price:
         for count, (symbol, idx) in enumerate(symbols_price, 1):
@@ -74,7 +73,6 @@ def fillin_market_data(path: str, current_date: datetime) -> None:
                     df.loc[idx, "current_price"] = current_price
                 if count % SAVE_INTERVAL == 0:
                     df.to_csv(path, index=False)
-                    print(f"Processed {count}/{len(symbols_price)} prices")
             except Exception as e:
                 print(f"Error processing {symbol}: {e}")
                 df.to_csv(path, index=False)
@@ -82,7 +80,6 @@ def fillin_market_data(path: str, current_date: datetime) -> None:
         df.to_csv(path, index=False)
 
     df.to_csv(path, index=False)
-    print("Processed all symbols")
 
 
 def get_next_report_days(
@@ -122,10 +119,8 @@ def fillin_finance_report_date(
 
     unique_symbols = df["symbol"].dropna().unique().tolist()
     if not unique_symbols:
-        print("No symbols found in dataframe")
         return df
 
-    print("Fetching earnings dates for all stocks...")
     earnings_dict_raw = get_all_earnings_dates(current_date)
     reports = {
         symbol: _process_earnings_dates(dates)

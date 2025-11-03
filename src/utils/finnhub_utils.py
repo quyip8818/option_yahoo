@@ -89,6 +89,22 @@ def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
 
     data = _make_api_request(url, params, "earnings_calendar")
 
+    if data is None:
+        print("Warning: earnings calendar API returned None")
+        return {}
+
+    if isinstance(data, dict):
+        if "error" in data:
+            print(f"Warning: earnings calendar API returned error: {data.get('error')}")
+            return {}
+        if "earningsCalendar" in data:
+            data = data["earningsCalendar"]
+        elif isinstance(data.get("earnings"), list):
+            data = data["earnings"]
+        else:
+            print(f"Warning: earnings calendar API returned dict with unexpected structure: {data.keys()}")
+            return {}
+
     if not isinstance(data, list):
         print(f"Warning: earnings calendar API returned non-list data: {type(data)}")
         return {}
@@ -105,5 +121,4 @@ def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
     for symbol in results:
         results[symbol] = sorted(list(set(results[symbol])))
 
-    print(f"Fetched earnings dates for {len(results)} symbols")
     return results
