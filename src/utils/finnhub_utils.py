@@ -81,11 +81,10 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
 
 
 def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
-    from_date = (current_date - timedelta(days=90)).strftime("%Y-%m-%d")
-    to_date = (current_date + timedelta(days=90)).strftime("%Y-%m-%d")
+    to_date = (current_date + timedelta(days=120)).strftime("%Y-%m-%d")
 
     url = f"{BASE_URL}/calendar/earnings"
-    params = {"from": from_date, "to": to_date, "token": FINNHUB_API_KEY}
+    params = {"to": to_date, "token": FINNHUB_API_KEY}
 
     data = _make_api_request(url, params, "earnings_calendar")
 
@@ -102,7 +101,9 @@ def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
         elif isinstance(data.get("earnings"), list):
             data = data["earnings"]
         else:
-            print(f"Warning: earnings calendar API returned dict with unexpected structure: {data.keys()}")
+            print(
+                f"Warning: earnings calendar API returned dict with unexpected structure: {data.keys()}"
+            )
             return {}
 
     if not isinstance(data, list):

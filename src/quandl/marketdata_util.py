@@ -95,18 +95,6 @@ def get_next_report_days(
     return None, None
 
 
-def get_pass_report_days(
-    date: pd.Timestamp, rep_dates: Optional[pd.DatetimeIndex]
-) -> Optional[int]:
-    if rep_dates is None:
-        return None
-    for rep_date in reversed(rep_dates):
-        pass_report_days = (date - rep_date).days
-        if pass_report_days >= 0:
-            return pass_report_days
-    return None
-
-
 def fillin_finance_report_date(
     df: pd.DataFrame, current_date: datetime
 ) -> pd.DataFrame:
@@ -131,15 +119,8 @@ def fillin_finance_report_date(
         lambda r: pd.Series(get_next_report_days(date, reports.get(r["symbol"]))),
         axis=1,
     )
-    df["pass_report_days"] = df.apply(
-        lambda r: get_pass_report_days(date, reports.get(r["symbol"])), axis=1
-    )
 
     current_headers = [
-        col
-        for col in df.columns
-        if col not in ["pass_report_days", "next_report_days", "next_report_date"]
+        col for col in df.columns if col not in ["next_report_days", "next_report_date"]
     ]
-    return df[
-        ["pass_report_days", "next_report_days", "next_report_date"] + current_headers
-    ]
+    return df[["next_report_days", "next_report_date"] + current_headers]

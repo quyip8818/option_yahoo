@@ -1,4 +1,4 @@
-TopHeaders = ["date", "next_report_days", "pass_report_days"]
+TopHeaders = ["date", "next_report_days"]
 
 HvHeaders = ["hv10", "hv20", "hv30", "hv60", "hv90", "hv120", "hv150", "hv180"]
 
