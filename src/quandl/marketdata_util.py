@@ -24,12 +24,6 @@ def fillin_market_data(path, date):
         if col not in df.columns:
             df[col] = None
 
-    symbols_price = [
-        (df.loc[idx, "symbol"], idx)
-        for idx in range(len(df))
-        if pd.isna(df.loc[idx, "current_price"])
-    ]
-
     symbols_earnings = [
         df.loc[idx, "symbol"]
         for idx in range(len(df))
@@ -37,22 +31,13 @@ def fillin_market_data(path, date):
         or pd.isna(df.loc[idx, "next_report_date"])
     ]
 
-    indices_map = {df.loc[idx, "symbol"]: idx for idx in range(len(df))}
+    symbols_price = [
+        (df.loc[idx, "symbol"], idx)
+        for idx in range(len(df))
+        if pd.isna(df.loc[idx, "current_price"])
+    ]
 
-    if symbols_price:
-        for count, (symbol, idx) in enumerate(symbols_price, 1):
-            try:
-                current_price = get_stock_price(symbol)
-                if current_price is not None:
-                    df.loc[idx, "current_price"] = current_price
-                if count % SAVE_INTERVAL == 0:
-                    df.to_csv(path, index=False)
-                    print(f"Processed {count}/{len(symbols_price)} prices")
-            except Exception as e:
-                print(f"Error processing {symbol}: {e}")
-                df.to_csv(path, index=False)
-                continue
-        df.to_csv(path, index=False)
+    indices_map = {df.loc[idx, "symbol"]: idx for idx in range(len(df))}
 
     if symbols_earnings:
         unique_symbols = list(set(symbols_earnings))
@@ -80,6 +65,22 @@ def fillin_market_data(path, date):
                 df.loc[idx, "next_report_days"] = next_report_days
             if next_report_date is not None:
                 df.loc[idx, "next_report_date"] = next_report_date
+        df.to_csv(path, index=False)
+
+    if symbols_price:
+        for count, (symbol, idx) in enumerate(symbols_price, 1):
+            try:
+                current_price = get_stock_price(symbol)
+                if current_price is not None:
+                    df.loc[idx, "current_price"] = current_price
+                if count % SAVE_INTERVAL == 0:
+                    df.to_csv(path, index=False)
+                    print(f"Processed {count}/{len(symbols_price)} prices")
+            except Exception as e:
+                print(f"Error processing {symbol}: {e}")
+                df.to_csv(path, index=False)
+                continue
+        df.to_csv(path, index=False)
 
     df.to_csv(path, index=False)
     print("Processed all symbols")
