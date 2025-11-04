@@ -103,10 +103,11 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
 
 
 def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
+    from_date = (current_date - timedelta(days=3)).strftime("%Y-%m-%d")
     to_date = (current_date + timedelta(days=120)).strftime("%Y-%m-%d")
 
     url = f"{BASE_URL}/calendar/earnings"
-    params = {"to": to_date}
+    params = {"from": from_date, "to": to_date}
 
     data = _make_api_request(url, params, "earnings_calendar")
 
