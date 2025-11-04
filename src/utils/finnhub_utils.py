@@ -103,7 +103,7 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
 
 
 def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
-    from_date = (current_date - timedelta(days=3)).strftime("%Y-%m-%d")
+    from_date = (current_date - timedelta(days=15)).strftime("%Y-%m-%d")
     to_date = (current_date + timedelta(days=120)).strftime("%Y-%m-%d")
 
     url = f"{BASE_URL}/calendar/earnings"
