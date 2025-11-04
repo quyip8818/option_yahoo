@@ -1,3 +1,5 @@
+import ast
+import itertools
 import os
 import time
 from datetime import datetime, timedelta
@@ -8,16 +10,26 @@ from src.utils.utils import round_num
 
 load_dotenv()
 
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+_api_keys_str = os.getenv("FINNHUB_API_KEYS", "").strip()
+FINNHUB_API_KEYS = [key.strip() for key in _api_keys_str.split(",") if key.strip()]
+
 BASE_URL = "https://finnhub.io/api/v1"
 API_DELAY = 0.3
+
+_api_key_cycle = itertools.cycle(FINNHUB_API_KEYS)
+
+
+def _get_next_api_key() -> str:
+    return next(_api_key_cycle)
 
 
 def _make_api_request(url: str, params: dict, symbol: str = "") -> Optional[dict]:
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, params=params, timeout=10)
+            api_key = _get_next_api_key()
+            params_with_token = {**params, "token": api_key}
+            response = requests.get(url, params=params_with_token, timeout=10)
 
             if response.status_code == 429:
                 wait_time = (attempt + 1) * 1.0
@@ -47,7 +59,7 @@ def _make_api_request(url: str, params: dict, symbol: str = "") -> Optional[dict
 
 def get_stock_price(symbol: str) -> Optional[float]:
     url = f"{BASE_URL}/quote"
-    params = {"symbol": symbol, "token": FINNHUB_API_KEY}
+    params = {"symbol": symbol}
     data = _make_api_request(url, params, symbol)
 
     if data and "c" in data and data["c"] is not None:
@@ -57,7 +69,7 @@ def get_stock_price(symbol: str) -> Optional[float]:
 
 def get_stock_market_cap(symbol: str) -> Optional[float]:
     url = f"{BASE_URL}/stock/profile2"
-    params = {"symbol": symbol, "token": FINNHUB_API_KEY}
+    params = {"symbol": symbol}
     data = _make_api_request(url, params, symbol)
 
     if (
@@ -71,7 +83,7 @@ def get_stock_market_cap(symbol: str) -> Optional[float]:
 
 def get_stock_earnings_dates(symbol: str) -> List[str]:
     url = f"{BASE_URL}/stock/earnings"
-    params = {"symbol": symbol, "token": FINNHUB_API_KEY}
+    params = {"symbol": symbol}
     data = _make_api_request(url, params, symbol)
 
     if isinstance(data, list):
@@ -84,7 +96,7 @@ def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
     to_date = (current_date + timedelta(days=120)).strftime("%Y-%m-%d")
 
     url = f"{BASE_URL}/calendar/earnings"
-    params = {"to": to_date, "token": FINNHUB_API_KEY}
+    params = {"to": to_date}
 
     data = _make_api_request(url, params, "earnings_calendar")
 
