@@ -14,7 +14,7 @@ _api_keys_str = os.getenv("FINNHUB_API_KEYS", "").strip()
 FINNHUB_API_KEYS = [key.strip() for key in _api_keys_str.split(",") if key.strip()]
 
 BASE_URL = "https://finnhub.io/api/v1"
-API_DELAY = 0.3
+API_DELAY = 0.2
 
 _api_key_cycle = itertools.cycle(FINNHUB_API_KEYS)
 
