@@ -100,12 +100,7 @@ def fillin_finance_report_date(
 ) -> pd.DataFrame:
     date = pd.Timestamp(current_date)
 
-    if "symbol" in df.columns:
-        df = df.copy()
-    else:
-        df = df.reset_index()
-
-    unique_symbols = df["symbol"].dropna().unique().tolist()
+    unique_symbols = df.index.dropna().unique().tolist()
     if not unique_symbols:
         return df
 
@@ -116,7 +111,7 @@ def fillin_finance_report_date(
     }
 
     df[["next_report_days", "next_report_date"]] = df.apply(
-        lambda r: pd.Series(get_next_report_days(date, reports.get(r["symbol"]))),
+        lambda r: pd.Series(get_next_report_days(date, reports.get(r.name))),
         axis=1,
     )
 
