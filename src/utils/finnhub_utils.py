@@ -103,7 +103,7 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
 
 
 def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
-    from_date = (current_date - timedelta(days=15)).strftime("%Y-%m-%d")
+    from_date = (current_date - timedelta(days=10)).strftime("%Y-%m-%d")
     to_date = (current_date + timedelta(days=120)).strftime("%Y-%m-%d")
 
     url = f"{BASE_URL}/calendar/earnings"
@@ -134,15 +134,20 @@ def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
         return {}
 
     results = {}
+    current_date_str = current_date.strftime("%Y-%m-%d")
+    
     for item in data:
         symbol = item.get("symbol")
         date = item.get("date")
         if symbol and date:
-            if symbol not in results:
-                results[symbol] = []
-            results[symbol].append(date)
+            if date >= current_date_str:
+                if symbol not in results:
+                    results[symbol] = date
+                else:
+                    if date < results[symbol]:
+                        results[symbol] = date
 
     for symbol in results:
-        results[symbol] = sorted(list(set(results[symbol])))
+        results[symbol] = [results[symbol]]
 
     return results
