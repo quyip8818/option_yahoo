@@ -1,4 +1,3 @@
-import ast
 import itertools
 import os
 import time
@@ -14,17 +13,26 @@ _api_keys_str = os.getenv("FINNHUB_API_KEYS", "").strip()
 FINNHUB_API_KEYS = [key.strip() for key in _api_keys_str.split(",") if key.strip()]
 
 BASE_URL = "https://finnhub.io/api/v1"
-API_DELAY = 0.2
+API_CALL_DELAY = 0.3
 
 _api_key_cycle = itertools.cycle(FINNHUB_API_KEYS)
+_api_call_count = 0
+_current_api_key = None
 
 
 def _get_next_api_key() -> str:
-    return next(_api_key_cycle)
+    global _api_call_count, _current_api_key
+    if _api_call_count % 50 == 0:
+        time.sleep(5)
+        _current_api_key = next(_api_key_cycle)
+        print(f"Switch key: " + _current_api_key)
+
+    _api_call_count += 1
+    return _current_api_key
 
 
 def _make_api_request(url: str, params: dict, symbol: str = "") -> Optional[dict]:
-    max_retries = 3
+    max_retries = 5
     for attempt in range(max_retries):
         try:
             api_key = _get_next_api_key()
@@ -32,14 +40,14 @@ def _make_api_request(url: str, params: dict, symbol: str = "") -> Optional[dict
             response = requests.get(url, params=params_with_token, timeout=10)
 
             if response.status_code == 429:
-                wait_time = (attempt + 1) * 1.0
+                wait_time = (attempt + 1) * 3.0
                 print(f"Rate limited for {symbol}, waiting {wait_time}s before retry")
                 time.sleep(wait_time)
                 continue
 
             response.raise_for_status()
             data = response.json()
-            time.sleep(API_DELAY)
+            time.sleep(API_CALL_DELAY)
             return data
         except requests.exceptions.HTTPError as e:
             if e.response and e.response.status_code == 429:
