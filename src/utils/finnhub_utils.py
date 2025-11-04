@@ -25,7 +25,6 @@ def _get_next_api_key() -> str:
     if _api_call_count % 50 == 0:
         time.sleep(5)
         _current_api_key = next(_api_key_cycle)
-        print(f"Switch key: " + _current_api_key)
 
     _api_call_count += 1
     return _current_api_key
@@ -71,7 +70,10 @@ def get_stock_price(symbol: str) -> Optional[float]:
     data = _make_api_request(url, params, symbol)
 
     if data and "c" in data and data["c"] is not None:
-        return round_num(data["c"], 2)
+        price = round_num(data["c"], 2)
+        print(f"Got price for {symbol}: {price}")
+        return price
+    print(f"Failed to get price for {symbol}")
     return None
 
 
