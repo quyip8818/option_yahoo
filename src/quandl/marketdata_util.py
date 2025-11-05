@@ -115,6 +115,9 @@ def fillin_finance_report_date(
         axis=1,
     )
 
+    if "current_price" not in df.columns:
+        df["current_price"] = pd.NA
+
     current_headers = [
         col for col in df.columns if col not in ["next_report_days", "next_report_date", "current_price"]
     ]
