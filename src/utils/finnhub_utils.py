@@ -102,52 +102,80 @@ def get_stock_earnings_dates(symbol: str) -> List[str]:
     return []
 
 
-def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
-    from_date = (current_date - timedelta(days=10)).strftime("%Y-%m-%d")
-    to_date = (current_date + timedelta(days=120)).strftime("%Y-%m-%d")
-
+def _fetch_earnings_calendar_chunk(
+    from_date: str, to_date: str
+) -> Optional[List[dict]]:
     url = f"{BASE_URL}/calendar/earnings"
     params = {"from": from_date, "to": to_date}
 
-    data = _make_api_request(url, params, "earnings_calendar")
+    data = _make_api_request(url, params, f"earnings_calendar_{from_date}_{to_date}")
 
     if data is None:
-        print("Warning: earnings calendar API returned None")
-        return {}
+        print(
+            f"Warning: earnings calendar API returned None for {from_date} to {to_date}"
+        )
+        return None
 
     if isinstance(data, dict):
         if "error" in data:
-            print(f"Warning: earnings calendar API returned error: {data.get('error')}")
-            return {}
+            print(
+                f"Warning: earnings calendar API returned error for {from_date} to {to_date}: {data.get('error')}"
+            )
+            return None
         if "earningsCalendar" in data:
             data = data["earningsCalendar"]
         elif isinstance(data.get("earnings"), list):
             data = data["earnings"]
         else:
             print(
-                f"Warning: earnings calendar API returned dict with unexpected structure: {data.keys()}"
+                f"Warning: earnings calendar API returned dict with unexpected structure for {from_date} to {to_date}: {data.keys()}"
             )
-            return {}
+            return None
 
     if not isinstance(data, list):
-        print(f"Warning: earnings calendar API returned non-list data: {type(data)}")
-        return {}
+        print(
+            f"Warning: earnings calendar API returned non-list data for {from_date} to {to_date}: {type(data)}"
+        )
+        return None
+
+    return data
+
+
+def get_all_earnings_dates(current_date: datetime) -> Dict[str, List[str]]:
+    start_date = current_date - timedelta(days=10)
+    end_date = current_date + timedelta(days=120)
+    current_date_str = current_date.strftime("%Y-%m-%d")
 
     results = {}
-    current_date_str = current_date.strftime("%Y-%m-%d")
-    
-    for item in data:
-        symbol = item.get("symbol")
-        date = item.get("date")
-        if symbol and date:
-            if date >= current_date_str:
-                if symbol not in results:
-                    results[symbol] = date
-                else:
-                    if date < results[symbol]:
-                        results[symbol] = date
+    chunk_days = 10
+
+    current_chunk_start = start_date
+    while current_chunk_start <= end_date:
+        current_chunk_end = min(
+            current_chunk_start + timedelta(days=chunk_days), end_date
+        )
+        from_date = current_chunk_start.strftime("%Y-%m-%d")
+        to_date = current_chunk_end.strftime("%Y-%m-%d")
+
+        data = _fetch_earnings_calendar_chunk(from_date, to_date)
+
+        if data is None:
+            current_chunk_start = current_chunk_end + timedelta(days=1)
+            continue
+
+        for item in data:
+            symbol = item.get("symbol")
+            date = item.get("date")
+            if symbol and date:
+                if date >= current_date_str:
+                    if symbol not in results:
+                        results[symbol] = []
+                    if date not in results[symbol]:
+                        results[symbol].append(date)
+
+        current_chunk_start = current_chunk_end + timedelta(days=1)
 
     for symbol in results:
-        results[symbol] = [results[symbol]]
+        results[symbol] = sorted(results[symbol])
 
     return results
