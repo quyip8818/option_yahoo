@@ -2,8 +2,14 @@ import time
 import webbrowser
 
 symbol_str = """
-DFIN YELP PBH
-"""
+AG
+HL
+PAAS
+KGC
+NEM
+BTG
+AEM
+B"""
 
 symbols = [s.strip() for s in symbol_str.split()]
 
